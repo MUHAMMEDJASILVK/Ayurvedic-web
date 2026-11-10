@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Kerala Ayurveda Store - Online Portal for Authentic Ayurvedic Medicines & Oils{% endblock %}</title>
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Amazon / Flipkart Style Sheet -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Notification Ribbon -->
+  <div class="top-notice-ribbon">
+    <span>🌿 <strong>Kerala Ayurveda Express:</strong> Free Delivery on orders over ₹499 across India. 100% Genuine Certified Kerala Formulations.</span>
+  </div>
+
+  <!-- Primary Amazon / Flipkart Header -->
+  <header class="header-main">
+    <!-- Brand Logo -->
+    <a href="{% url 'home' %}" class="brand-logo-container" title="Kerala Ayurveda Portal">
+      <div class="brand-logo-icon">
+        <i class="fa-solid fa-leaf"></i>
+      </div>
+      <div class="brand-title-wrap">
+        <div class="brand-title">Kerala<span>Ayurveda</span></div>
+        <div class="brand-subtitle">Authentic Kerala Store</div>
+      </div>
+    </a>
+
+    <!-- Delivery Location Selector (Amazon Style) -->
+    <div class="header-location" onclick="promptPincode()" title="Choose delivery location">
+      <i class="fa-solid fa-location-dot location-icon"></i>
+      <div class="location-text">
+        <div>Deliver to</div>
+        <div class="location-target" id="header-pincode-display">Kochi 682001</div>
+      </div>
+    </div>
+
+    <!-- Search Bar with Category Dropdown -->
+    <div class="header-search-wrap">
+      <form action="{% url 'home' %}" method="GET" class="header-search-form">
+        <select name="category" class="search-category-select">
+          <option value="">All Categories</option>
+          {% for cat in nav_categories %}
+            <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="q" id="header-search-input" class="search-input" 
+               placeholder="Search 100+ Kerala Ayurvedic medicines, oils, lehyam, tablets..." 
+               value="{{ request.GET.q|default:'' }}" autocomplete="off">
+        <button type="submit" class="search-submit-btn" aria-label="Search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </form>
+      <!-- Suggestions dropdown populated via AJAX -->
+      <div id="search-suggestions-box" class="search-suggestions-box"></div>
+    </div>
+
+    <!-- Right Header Action Links -->
+    <div class="header-nav-links">
+      <!-- User Sign In / Account Dropdown -->
+      <div class="header-link account-dropdown-wrap" style="position: relative;">
+        {% if user.is_authenticated %}
+          <div class="nav-link-sub">Namaste, {{ user.first_name|default:user.username }}</div>
+          <div class="nav-link-main">Account & Lists <i class="fa-solid fa-caret-down" style="font-size: 10px;"></i></div>
+          <!-- Dropdown menu -->
+          <div class="account-hover-menu">
+            <div class="menu-user-header">
+              <strong>{{ user.get_full_name|default:user.username }}</strong>
+              <div style="font-size: 11px; color: #6b7280;">{{ user.email }}</div>
+            </div>
+            <a href="{% url 'profile' %}"><i class="fa-regular fa-user"></i> Your Account</a>
+            <a href="{% url 'order_history' %}"><i class="fa-solid fa-box"></i> Your Orders</a>
+            <a href="{% url 'inventory_dashboard' %}"><i class="fa-solid fa-boxes-stacked"></i> Seller / Inventory Hub</a>
+            <hr style="margin: 6px 0; border: none; border-top: 1px solid #f3f4f6;">
+            <a href="{% url 'logout' %}" style="color: #dc2626;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
+          </div>
+        {% else %}
+          <a href="{% url 'login' %}" style="color: #fff; text-decoration: none;">
+            <div class="nav-link-sub">Hello, Sign in</div>
+            <div class="nav-link-main">Account & Lists <i class="fa-solid fa-caret-down" style="font-size: 10px;"></i></div>
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Orders Link -->
+      <a href="{% if user.is_authenticated %}{% url 'order_history' %}{% else %}{% url 'login' %}?next={% url 'order_history' %}{% endif %}" class="header-link">
+        <div class="nav-link-sub">Returns</div>
+        <div class="nav-link-main">&amp; Orders</div>
+      </a>
+
+      <!-- Inventory / Seller Hub Link -->
+      <a href="{% url 'inventory_dashboard' %}" class="header-link" title="Manage Stock & Fulfillment">
+        <div class="nav-link-sub">Seller Hub</div>
+        <div class="nav-link-main"><i class="fa-solid fa-warehouse"></i> Inventory</div>
+      </a>
+
+      <!-- Cart Button with Count Badge -->
+      <a href="{% url 'cart' %}" class="header-cart-btn">
+        <div class="cart-icon-wrap">
+          <i class="fa-solid fa-cart-shopping" style="font-size: 24px;"></i>
+          <span class="cart-count-badge">{{ cart_item_count|default:"0" }}</span>
+        </div>
+        <span class="cart-text-label">Cart</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Secondary Navigation Strip (Flipkart / Amazon Style) -->
+  <nav class="header-subnav">
+    <a href="{% url 'home' %}" class="subnav-link {% if not request.GET.category %}active{% endif %}">
+      <i class="fa-solid fa-bars"></i> All Products (100)
+    </a>
+    {% for cat in nav_categories %}
+      <a href="{% url 'home' %}?category={{ cat.slug }}" class="subnav-link {% if request.GET.category == cat.slug %}active{% endif %}">
+        {{ cat.name }}
+      </a>
+    {% endfor %}
+    <a href="{% url 'home' %}?brand=kottakkal-arya-vaidya-sala" class="subnav-link" style="color: #ffd814;">
+      <i class="fa-solid fa-award"></i> Kottakkal Special
+    </a>
+    <a href="{% url 'inventory_stock_list' %}" class="subnav-link" style="margin-left: auto;">
+      <i class="fa-solid fa-layer-group"></i> Stock &amp; Inventory <span class="subnav-badge">Seller</span>
+    </a>
+  </nav>
+
+  <!-- Main Body Content -->
+  <main class="site-main-content">
+    <!-- Messages / Notifications -->
+    {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {% if message.tags == 'success' %}
+              <i class="fa-solid fa-circle-check"></i>
+            {% elif message.tags == 'error' %}
+              <i class="fa-solid fa-circle-exclamation"></i>
+            {% else %}
+              <i class="fa-solid fa-circle-info"></i>
+            {% endif %}
+            <div>{{ message }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Amazon Style Back to Top & Footer -->
+  <footer style="margin-top: 60px;">
+    <div style="background: #37475a; color: #fff; text-align: center; padding: 14px; cursor: pointer; font-size: 13px;" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+      Back to top <i class="fa-solid fa-chevron-up" style="margin-left: 6px;"></i>
+    </div>
+    
+    <div style="background: #232f3e; color: #cbd5e1; padding: 40px 20px; font-size: 13px;">
+      <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px;">
+        <div>
+          <h4 style="color: #fff; font-size: 15px; margin-bottom: 12px;">Kerala Ayurveda Heritage</h4>
+          <p style="line-height: 1.6; font-size: 12px; color: #94a3b8;">
+            Directly connecting you to centuries-old Kerala Ayurvedic traditions. We partner with authentic GMP-certified manufacturers including Kottakkal Arya Vaidya Sala, Vaidyaratnam, Oushadhi, and Kerala Ayurveda Ltd.
+          </p>
+        </div>
+        <div>
+          <h4 style="color: #fff; font-size: 15px; margin-bottom: 12px;">Ayurvedic Brands</h4>
+          <ul style="list-style: none; line-height: 2;">
+            <li><a href="{% url 'home' %}?brand=kottakkal-arya-vaidya-sala" style="color: #cbd5e1;">Kottakkal Arya Vaidya Sala</a></li>
+            <li><a href="{% url 'home' %}?brand=kerala-ayurveda" style="color: #cbd5e1;">Kerala Ayurveda Limited</a></li>
+            <li><a href="{% url 'home' %}?brand=vaidyaratnam" style="color: #cbd5e1;">Vaidyaratnam Oushadhasala</a></li>
+            <li><a href="{% url 'home' %}?brand=oushadhi" style="color: #cbd5e1;">Oushadhi (Govt of Kerala)</a></li>
+            <li><a href="{% url 'home' %}?brand=sitaram-ayurveda" style="color: #cbd5e1;">Sitaram Ayurveda</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="color: #fff; font-size: 15px; margin-bottom: 12px;">Seller &amp; Inventory</h4>
+          <ul style="list-style: none; line-height: 2;">
+            <li><a href="{% url 'inventory_dashboard' %}" style="color: #cbd5e1;">Seller Central Dashboard</a></li>
+            <li><a href="{% url 'inventory_stock_list' %}" style="color: #cbd5e1;">Stock &amp; Inventory Control</a></li>
+            <li><a href="{% url 'inventory_orders' %}" style="color: #cbd5e1;">Order Fulfillment</a></li>
+            <li><a href="{% url 'home' %}?in_stock=1" style="color: #cbd5e1;">In-Stock Products</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="color: #fff; font-size: 15px; margin-bottom: 12px;">Customer Verification</h4>
+          <p style="font-size: 12px; line-height: 1.6; color: #94a3b8;">
+            Secure multi-factor OTP verification via registered Email &amp; Mobile ensures genuine orders and authentic patient care.
+          </p>
+          <div style="margin-top: 14px; display: flex; gap: 10px; font-size: 20px; color: #cbd5e1;">
+            <i class="fa-brands fa-whatsapp"></i>
+            <i class="fa-brands fa-facebook"></i>
+            <i class="fa-brands fa-instagram"></i>
+            <i class="fa-brands fa-youtube"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #131921; color: #94a3b8; text-align: center; padding: 20px; font-size: 12px; border-top: 1px solid #374151;">
+      <p>&copy; 2026 Kerala Ayurveda Portal. All 100 Classical Products Certified by Department of Ayush standards. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Toast Message Container -->
+  <div id="toast-container"></div>
+
+  <!-- Custom CSS for account dropdown -->
+  <style>
+    .account-hover-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1002;
+      padding: 10px 0;
+    }
+    .account-dropdown-wrap:hover .account-hover-menu {
+      display: block;
+    }
+    .account-hover-menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      color: #374151;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .account-hover-menu a:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .menu-user-header {
+      padding: 8px 16px 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      color: #111827;
+    }
+  </style>
+
+  <!-- Pincode Prompt script -->
+  <script>
+    function promptPincode() {
+      const pin = prompt("Enter your 6-digit Delivery Pincode:", "682001");
+      if (pin && pin.trim().length === 6) {
+        document.getElementById('header-pincode-display').textContent = `Pincode ${pin}`;
+        localStorage.setItem('delivery_pin', pin);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedPin = localStorage.getItem('delivery_pin');
+      if (savedPin) {
+        const el = document.getElementById('header-pincode-display');
+        if (el) el.textContent = `Pincode ${savedPin}`;
+      }
+    });
+  </script>
+
+  <!-- Main JavaScript File -->
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

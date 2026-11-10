@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock &amp; Inventory Management - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: #111827;">Product Stock &amp; Inventory</h1>
+      <p style="font-size: 13px; color: #6b7280;">Manage live inventory counts, set restock quantities, and monitor warehouse stock levels.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{% url 'inventory_dashboard' %}" class="page-btn">
+        &larr; Seller Dashboard
+      </a>
+      <a href="{% url 'inventory_orders' %}" class="page-btn">
+        Order Fulfillment Central &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters & Search Toolbar -->
+  <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <form method="GET" action="{% url 'inventory_stock_list' %}" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+      
+      <!-- Search Input -->
+      <div style="flex: 1; min-width: 220px;">
+        <input type="text" name="q" placeholder="Search by SKU, Product Name, or Brand..." value="{{ q }}" class="form-control" style="padding: 8px 12px;">
+      </div>
+
+      <!-- Category Filter -->
+      <select name="category" class="form-control" style="width: auto; padding: 8px 12px;">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.slug }}" {% if cat_slug == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Status Filter -->
+      <select name="status" class="form-control" style="width: auto; padding: 8px 12px;">
+        <option value="">All Stock Statuses</option>
+        <option value="low" {% if status == 'low' %}selected{% endif %}>Low Stock (&le;12 units)</option>
+        <option value="out" {% if status == 'out' %}selected{% endif %}>Out of Stock (0 units)</option>
+        <option value="in_stock" {% if status == 'in_stock' %}selected{% endif %}>Healthy Stock (>12 units)</option>
+      </select>
+
+      <!-- Sorting -->
+      <select name="sort" class="form-control" style="width: auto; padding: 8px 12px;">
+        <option value="stock_asc" {% if sort_by == 'stock_asc' %}selected{% endif %}>Stock: Lowest First</option>
+        <option value="stock_desc" {% if sort_by == 'stock_desc' %}selected{% endif %}>Stock: Highest First</option>
+        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Product Name (A-Z)</option>
+      </select>
+
+      <button type="submit" class="btn-proceed-pay" style="width: auto; padding: 8px 18px; font-size: 13px;">
+        Apply Filter
+      </button>
+
+      {% if q or cat_slug or status %}
+        <a href="{% url 'inventory_stock_list' %}" class="page-btn" style="padding: 8px 12px; color: #dc2626;">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Stock Data Table -->
+  <div class="data-table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Product Name</th>
+          <th>Category</th>
+          <th>Brand</th>
+          <th>Price / M.R.P.</th>
+          <th>In-Stock Units</th>
+          <th>Stock Status</th>
+          <th style="text-align: right;">Inventory Restock Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+          <tr>
+            <td>
+              <code>{{ p.sku }}</code>
+            </td>
+            <td>
+              <a href="{% url 'product_detail' p.slug %}" target="_blank" style="font-weight: 700; color: #111827;">
+                {{ p.name }}
+              </a>
+              <div style="font-size: 11px; color: #6b7280;">{{ p.volume_weight }}</div>
+            </td>
+            <td>{{ p.category.name }}</td>
+            <td>
+              <span style="font-weight: 600; color: #14532d;">{{ p.brand.name }}</span>
+            </td>
+            <td>
+              <strong>₹{{ p.price|floatformat:0 }}</strong>
+              <span style="font-size: 11px; color: #9ca3af; text-decoration: line-through;">₹{{ p.mrp|floatformat:0 }}</span>
+            </td>
+            <td>
+              <strong id="stock-val-{{ p.id }}" style="font-size: 16px; {% if p.stock == 0 %}color: #dc2626;{% elif p.is_low_stock %}color: #b45309;{% else %}color: #15803d;{% endif %}">
+                {{ p.stock }}
+              </strong>
+            </td>
+            <td>
+              {% if p.stock == 0 %}
+                <span style="background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">OUT OF STOCK</span>
+              {% elif p.is_low_stock %}
+                <span style="background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">LOW STOCK ({{ p.stock }})</span>
+              {% else %}
+                <span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">IN STOCK</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <form action="{% url 'update_stock' p.id %}" method="POST" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action_type" value="add">
+                  <input type="hidden" name="quantity" value="10">
+                  <button type="submit" class="page-btn" style="padding: 4px 8px; font-size: 11px; background: #f0fdf4; border-color: #86efac; color: #15803d; font-weight: 700;" title="Add 10 units">
+                    +10
+                  </button>
+                </form>
+                <form action="{% url 'update_stock' p.id %}" method="POST" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action_type" value="add">
+                  <input type="hidden" name="quantity" value="50">
+                  <button type="submit" class="page-btn" style="padding: 4px 8px; font-size: 11px; background: #f0fdf4; border-color: #86efac; color: #15803d; font-weight: 700;" title="Add 50 units">
+                    +50
+                  </button>
+                </form>
+                <button type="button" class="btn-quick-restock page-btn" 
+                        data-product-id="{{ p.id }}" data-product-name="{{ p.name }}"
+                        style="padding: 4px 10px; font-size: 11px; font-weight: 600;">
+                  Custom
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 30px; color: #6b7280;">
+              No products found matching the query.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <div class="pagination-wrap">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat_slug %}&category={{ cat_slug }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-btn">
+          &laquo; Previous
+        </a>
+      {% endif %}
+
+      <span style="font-size: 13px; color: #6b7280; margin: 0 10px;">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if cat_slug %}&category={{ cat_slug }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-btn">
+          Next &raquo;
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

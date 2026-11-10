@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load product_tags %}
+
+{% block title %}Checkout - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 24px; font-weight: 800; color: #111827;">Checkout</h1>
+    <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 13px; color: #6b7280;">
+      <span style="color: #15803d; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 1. Delivery Address</span>
+      <span>&rsaquo;</span>
+      <span style="color: #15803d; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 2. Order Review</span>
+      <span>&rsaquo;</span>
+      <span style="color: #15803d; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 3. Payment Method</span>
+    </div>
+  </div>
+
+  <form method="POST" action="{% url 'place_order' %}" id="checkout-form">
+    {% csrf_token %}
+
+    <div style="display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start;">
+      
+      <!-- Left Column: Checkout Accordion Steps -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+
+        <!-- STEP 1: Delivery Address -->
+        <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #111827;">
+              <span style="background: #14532d; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 8px;">1</span>
+              Delivery Address
+            </h3>
+            <span style="font-size: 12px; color: #15803d; font-weight: 600;">Kerala Express Eligible</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" name="full_name" class="form-control" required value="{{ initial.full_name }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number *</label>
+              <input type="tel" name="phone" class="form-control" required value="{{ initial.phone }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email for Tracking Updates *</label>
+            <input type="email" name="email" class="form-control" required value="{{ initial.email }}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Street Address / House No. *</label>
+            <textarea name="address" class="form-control" rows="2" required placeholder="Apartment, house no., building name, street">{{ initial.address_line1 }}</textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">City *</label>
+              <input type="text" name="city" class="form-control" required placeholder="e.g. Ernakulam / Kozhikode" value="{{ initial.city }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">State *</label>
+              <input type="text" name="state" class="form-control" required value="{{ initial.state }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pincode *</label>
+              <input type="text" name="pincode" class="form-control" required placeholder="682001" maxlength="6" value="{{ initial.pincode }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Landmark (Optional)</label>
+            <input type="text" name="landmark" class="form-control" placeholder="Near temple, hospital, bus stand">
+          </div>
+        </div>
+
+        <!-- STEP 2: Items Review -->
+        <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <div style="margin-bottom: 14px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #111827;">
+              <span style="background: #14532d; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 8px;">2</span>
+              Review Items in Order ({{ cart.total_items }})
+            </h3>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for item in cart_items %}
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #f9fafb;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 50px; height: 50px; background: #fafaf9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                    {% render_product_image item.product %}
+                  </div>
+                  <div>
+                    <div style="font-weight: 600; font-size: 13px; color: #111827;">{{ item.product.name }}</div>
+                    <div style="font-size: 11px; color: #6b7280;">{{ item.product.brand.name }} &bull; Qty: {{ item.quantity }}</div>
+                  </div>
+                </div>
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                  ₹{{ item.line_total|floatformat:0 }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- STEP 3: Payment Method -->
+        <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <div style="margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #111827;">
+              <span style="background: #14532d; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 8px;">3</span>
+              Select Payment Method
+            </h3>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            
+            <!-- UPI -->
+            <label style="display: flex; gap: 12px; cursor: pointer; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fdfdfd;">
+              <input type="radio" name="payment_method" value="upi" checked style="accent-color: #15803d; margin-top: 2px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                  UPI / QR Code (Google Pay, PhonePe, Paytm, BHIM)
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                  Instant zero-fee payment with any UPI app.
+                </div>
+                <div id="panel-upi" class="payment-tab-content" style="margin-top: 10px; padding: 12px; background: #f0fdf4; border-radius: 6px; border: 1px dashed #86efac;">
+                  <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- Simulated Dynamic QR -->
+                    <div style="width: 70px; height: 70px; background: #fff; border: 2px solid #16a34a; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #15803d;">
+                      <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div>
+                      <div style="font-size: 12px; font-weight: 700; color: #166534;">Scan QR with PhonePe / GPay or enter UPI ID</div>
+                      <input type="text" placeholder="username@oksbi / @ybl" style="margin-top: 6px; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; width: 220px;" value="kerala.ayurveda@upi">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Cards -->
+            <label style="display: flex; gap: 12px; cursor: pointer; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fdfdfd;">
+              <input type="radio" name="payment_method" value="card" style="accent-color: #15803d; margin-top: 2px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                  Credit or Debit Card (Visa, RuPay, MasterCard)
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                  Supports all major Indian and international bank cards.
+                </div>
+                <div id="panel-card" class="payment-tab-content" style="display: none; margin-top: 10px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                  <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                    <input type="text" placeholder="Card Number (4XXX XXXX XXXX XXXX)" style="padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                    <input type="text" placeholder="MM / YY" style="padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                    <input type="text" placeholder="CVV" style="padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Netbanking -->
+            <label style="display: flex; gap: 12px; cursor: pointer; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fdfdfd;">
+              <input type="radio" name="payment_method" value="netbanking" style="accent-color: #15803d; margin-top: 2px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                  Net Banking
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                  Federal Bank, SBI, HDFC, ICICI, Canara, South Indian Bank.
+                </div>
+              </div>
+            </label>
+
+            <!-- COD -->
+            <label style="display: flex; gap: 12px; cursor: pointer; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fdfdfd;">
+              <input type="radio" name="payment_method" value="cod" style="accent-color: #15803d; margin-top: 2px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 14px; color: #111827;">
+                  Cash on Delivery (Pay at Doorstep)
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                  Pay cash or UPI when Kerala Express delivers to your door.
+                </div>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Final Order Summary & Place Button -->
+      <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: sticky; top: 80px;">
+        
+        <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+          Order Summary
+        </h3>
+
+        <div style="font-size: 13px; color: #4b5563; line-height: 2; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Items ({{ cart.total_items }}):</span>
+            <span>₹{{ cart.subtotal_mrp|floatformat:0 }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; color: #15803d;">
+            <span>Discount on M.R.P.:</span>
+            <span>- ₹{{ cart.total_discount|floatformat:0 }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Delivery &amp; Packaging:</span>
+            <span>
+              {% if cart.delivery_fee == 0 %}
+                <span style="color: #15803d; font-weight: 700;">FREE</span>
+              {% else %}
+                ₹{{ cart.delivery_fee }}
+              {% endif %}
+            </span>
+          </div>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 10px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #b12704;">
+            <span>Order Total:</span>
+            <span>₹{{ cart.grand_total|floatformat:0 }}</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-proceed-pay" style="padding: 14px; font-size: 16px;">
+          Place Order &amp; Pay ₹{{ cart.grand_total|floatformat:0 }}
+        </button>
+
+        <div style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 14px; line-height: 1.5;">
+          By placing your order, you agree to Kerala Ayurveda Portal's privacy notice and conditions of use.
+        </div>
+
+        <div style="margin-top: 16px; border-top: 1px solid #f3f4f6; padding-top: 12px; font-size: 11px; color: #15803d; text-align: center;">
+          <i class="fa-solid fa-lock"></i> 256-Bit SSL Encrypted &bull; Direct Kerala Dispatch
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Fulfillment Central - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: #111827;">Order Fulfillment Central</h1>
+      <p style="font-size: 13px; color: #6b7280;">Dispatch customer orders, assign Kerala Express tracking IDs, and manage fulfillment.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{% url 'inventory_dashboard' %}" class="page-btn">
+        &larr; Dashboard
+      </a>
+      <a href="{% url 'inventory_stock_list' %}" class="page-btn">
+        Stock Inventory &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <form method="GET" action="{% url 'inventory_orders' %}" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+      <div style="flex: 1; min-width: 220px;">
+        <input type="text" name="q" placeholder="Search by Order #, Customer Name, Phone, or Email..." value="{{ q }}" class="form-control" style="padding: 8px 12px;">
+      </div>
+
+      <select name="status" class="form-control" style="width: auto; padding: 8px 12px;">
+        <option value="">All Fulfillment Statuses</option>
+        {% for code, label in status_choices %}
+          <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn-proceed-pay" style="width: auto; padding: 8px 18px; font-size: 13px;">
+        Filter Orders
+      </button>
+
+      {% if q or status %}
+        <a href="{% url 'inventory_orders' %}" class="page-btn" style="padding: 8px 12px; color: #dc2626;">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="data-table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Order # &amp; Date</th>
+          <th>Customer Details</th>
+          <th>Items Ordered</th>
+          <th>Amount &amp; Payment</th>
+          <th>Current Status</th>
+          <th>Tracking / Courier</th>
+          <th style="text-align: right;">Update Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+          <tr>
+            <td>
+              <a href="{% url 'order_detail' o.order_number %}" style="font-weight: 700; color: #007185;">
+                {{ o.order_number }}
+              </a>
+              <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">{{ o.created_at|date:"d M Y, h:i A" }}</div>
+              <a href="{% url 'invoice' o.order_number %}" target="_blank" style="font-size: 11px; color: #15803d; font-weight: 600;">
+                <i class="fa-solid fa-file-invoice"></i> Invoice
+              </a>
+            </td>
+            <td>
+              <strong>{{ o.full_name }}</strong>
+              <div style="font-size: 11px; color: #4b5563;">{{ o.phone }}</div>
+              <div style="font-size: 11px; color: #6b7280;">{{ o.city }}, {{ o.state }} - {{ o.pincode }}</div>
+            </td>
+            <td>
+              <strong style="color: #111827;">{{ o.items.count }} items</strong>
+              <div style="font-size: 11px; color: #6b7280; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {% for item in o.items.all %}
+                  {{ item.quantity }}x {{ item.product_name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <div style="font-size: 15px; font-weight: 800; color: #b12704;">₹{{ o.grand_total }}</div>
+              <div style="font-size: 11px; color: #15803d; font-weight: 600;">{{ o.get_payment_method_display }}</div>
+            </td>
+            <td>
+              <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; {% if o.order_status == 'delivered' %}background: #dcfce7; color: #15803d;{% elif o.order_status == 'shipped' %}background: #e0f2fe; color: #0369a1;{% elif o.order_status == 'cancelled' %}background: #fee2e2; color: #b91c1c;{% else %}background: #fef3c7; color: #92400e;{% endif %}">
+                {{ o.get_order_status_display }}
+              </span>
+            </td>
+            <td>
+              <div style="font-weight: 600; font-size: 12px; color: #111827;">{{ o.tracking_number }}</div>
+              <div style="font-size: 11px; color: #6b7280;">{{ o.courier_partner }}</div>
+            </td>
+            <td style="text-align: right;">
+              <form action="{% url 'update_order_status' o.id %}" method="POST" style="display: inline-flex; gap: 6px; align-items: center;">
+                {% csrf_token %}
+                <select name="order_status" class="form-control" style="width: auto; padding: 4px 6px; font-size: 11px;">
+                  {% for code, label in status_choices %}
+                    <option value="{{ code }}" {% if o.order_status == code %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="page-btn" style="padding: 4px 8px; font-size: 11px; font-weight: 700; background: #f0fdf4; border-color: #86efac; color: #15803d;">
+                  Save
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 30px; color: #6b7280;">
+              No orders found matching the filter.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <div class="pagination-wrap">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn">
+          &laquo; Previous
+        </a>
+      {% endif %}
+
+      <span style="font-size: 13px; color: #6b7280; margin: 0 10px;">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="page-btn">
+          Next &raquo;
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

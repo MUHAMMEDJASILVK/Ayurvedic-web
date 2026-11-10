@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign in - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+
+  <div class="auth-box">
+    <h2 class="auth-title">Sign in</h2>
+
+    <form method="POST" action="{% url 'login' %}{% if next %}?next={{ next }}{% endif %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="login_identifier" class="form-label">Email or Mobile Phone Number</label>
+        <input type="text" id="login_identifier" name="login_identifier" class="form-control" 
+               placeholder="Registered email or 10-digit mobile" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <label for="password" class="form-label">Password</label>
+        </div>
+        <input type="password" id="password" name="password" class="form-control" 
+               placeholder="Enter your password" required>
+      </div>
+
+      <button type="submit" class="btn-auth-primary" style="margin-top: 8px;">
+        Sign in
+      </button>
+
+      <div style="font-size: 11px; color: #6b7280; line-height: 1.5; margin-top: 16px;">
+        By signing in, you agree to Kerala Ayurveda's Conditions of Use and Privacy Notice.
+      </div>
+    </form>
+
+    <div style="margin: 24px 0 16px; position: relative; text-align: center;">
+      <hr style="border: none; border-top: 1px solid #e5e7eb;">
+      <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #fff; padding: 0 12px; font-size: 12px; color: #6b7280;">New to Kerala Ayurveda Store?</span>
+    </div>
+
+    <a href="{% url 'register' %}" class="btn-proceed-pay" style="background: #f0fdf4; border: 1px solid #86efac; color: #166534; font-size: 13px; font-weight: 600;">
+      Create your Kerala Ayurveda account
+    </a>
+
+    <!-- Demo / Fast test notice -->
+    <div style="margin-top: 20px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 6px; padding: 10px; font-size: 11px; color: #57534e;">
+      <strong>Note:</strong> Only registered users who verified their Email &amp; Mobile via OTP can log in.
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

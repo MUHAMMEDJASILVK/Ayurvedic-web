@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load product_tags %}
+
+{% block title %}
+  {% if current_category %}{{ current_category.name }} - Kerala Ayurveda Store{% elif query %}Search: {{ query }} - Kerala Ayurveda Store{% else %}Kerala Ayurveda Store - 100 Authentic Products Across Kerala Brands{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="catalog-layout">
+
+  <!-- Left Sidebar: Amazon / Flipkart Style Filters -->
+  <aside class="catalog-sidebar">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <h3 style="font-size: 16px; font-weight: 800; color: #111827;">Filters</h3>
+      {% if category_slug or selected_brands or min_price or max_price or in_stock_only or query %}
+        <a href="{% url 'home' %}" style="font-size: 12px; color: #dc2626; font-weight: 600;">Clear All</a>
+      {% endif %}
+    </div>
+
+    <!-- Category Filter -->
+    <div class="filter-section">
+      <div class="filter-heading">
+        <span>Categories ({{ all_categories.count }})</span>
+      </div>
+      <ul class="filter-list">
+        <li class="filter-item">
+          <a href="{% url 'home' %}{% if query %}?q={{ query }}{% endif %}" 
+             class="filter-link {% if not category_slug %}active{% endif %}">
+            <span><i class="fa-solid fa-layer-group" style="margin-right: 6px; font-size: 11px;"></i> All Categories</span>
+            <span class="filter-count">100</span>
+          </a>
+        </li>
+        {% for cat in all_categories %}
+          <li class="filter-item">
+            <a href="{% url 'home' %}?category={{ cat.slug }}{% if query %}&q={{ query }}{% endif %}" 
+               class="filter-link {% if category_slug == cat.slug %}active{% endif %}">
+              <span><i class="fa-solid {{ cat.icon_name }}" style="margin-right: 6px; font-size: 11px;"></i> {{ cat.name }}</span>
+              <span class="filter-count">{{ cat.products.count }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Filter Form for Brands, Price, and Stock -->
+    <form action="{% url 'home' %}" method="GET" id="sidebar-filter-form">
+      {% if category_slug %}
+        <input type="hidden" name="category" value="{{ category_slug }}">
+      {% endif %}
+      {% if query %}
+        <input type="hidden" name="q" value="{{ query }}">
+      {% endif %}
+      {% if sort_by %}
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+      {% endif %}
+
+      <!-- Kerala Brands Filter -->
+      <div class="filter-section">
+        <div class="filter-heading">
+          <span>Kerala Ayurvedic Brands</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto;">
+          {% for b in all_brands %}
+            <label class="brand-checkbox-label">
+              <input type="checkbox" name="brand" value="{{ b.slug }}" 
+                     {% if b.slug in selected_brands %}checked{% endif %}
+                     onchange="document.getElementById('sidebar-filter-form').submit()">
+              <span>{{ b.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Availability / Stock Filter -->
+      <div class="filter-section">
+        <div class="filter-heading">
+          <span>Availability</span>
+        </div>
+        <label class="brand-checkbox-label">
+          <input type="checkbox" name="in_stock" value="1" 
+                 {% if in_stock_only %}checked{% endif %}
+                 onchange="document.getElementById('sidebar-filter-form').submit()">
+          <span style="font-weight: 600; color: #15803d;">Include In-Stock Only</span>
+        </label>
+      </div>
+
+      <!-- Price Range Filter -->
+      <div class="filter-section">
+        <div class="filter-heading">
+          <span>Price (INR)</span>
+        </div>
+        <ul class="filter-list">
+          <li class="filter-item">
+            <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}max_price=200" class="filter-link">Under ₹200</a>
+          </li>
+          <li class="filter-item">
+            <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}min_price=200&max_price=350" class="filter-link">₹200 - ₹350</a>
+          </li>
+          <li class="filter-item">
+            <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}min_price=350&max_price=500" class="filter-link">₹350 - ₹500</a>
+          </li>
+          <li class="filter-item">
+            <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}min_price=500" class="filter-link">Over ₹500</a>
+          </li>
+        </ul>
+        <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center;">
+          <input type="number" name="min_price" placeholder="₹ Min" value="{{ min_price }}" style="width: 70px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+          <span>-</span>
+          <input type="number" name="max_price" placeholder="₹ Max" value="{{ max_price }}" style="width: 70px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px;">
+          <button type="submit" style="background: #e5e7eb; border: 1px solid #9ca3af; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Go</button>
+        </div>
+      </div>
+
+      <!-- Customer Ratings Filter -->
+      <div class="filter-section">
+        <div class="filter-heading">
+          <span>Customer Rating</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}rating=4.5" class="filter-link">
+            <span>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star-half-stroke" style="color: #f59e0b;"></i>
+              &amp; Up (4.5★)
+            </span>
+          </a>
+          <a href="?{% if category_slug %}category={{ category_slug }}&{% endif %}rating=4.0" class="filter-link">
+            <span>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-solid fa-star" style="color: #f59e0b;"></i>
+              <i class="fa-regular fa-star" style="color: #f59e0b;"></i>
+              &amp; Up (4.0★)
+            </span>
+          </a>
+        </div>
+      </div>
+    </form>
+  </aside>
+
+  <!-- Right Section: Product Catalog Grid -->
+  <section class="catalog-content">
+    
+    <!-- Header Bar: Count and Sort Dropdown -->
+    <div class="catalog-header-bar">
+      <div class="results-count-text">
+        Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of <strong>{{ total_count }}</strong> products
+        {% if current_category %}for "<strong>{{ current_category.name }}</strong>"{% endif %}
+        {% if query %}for "<strong>{{ query }}</strong>"{% endif %}
+      </div>
+
+      <div class="sort-select-wrap">
+        <label for="catalog-sort">Sort by:</label>
+        <select id="catalog-sort" class="sort-select" onchange="handleSortChange(this.value)">
+          <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
+          <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Avg. Customer Review</option>
+          <option value="discount" {% if sort_by == 'discount' %}selected{% endif %}>Discount: High to Low</option>
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Filters Pills -->
+    {% if category_slug or selected_brands or query or in_stock_only %}
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <span style="font-size: 12px; color: #6b7280;">Active filters:</span>
+        {% if current_category %}
+          <span style="background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 20px; font-size: 12px;">Category: {{ current_category.name }}</span>
+        {% endif %}
+        {% if selected_brands %}
+          <span style="background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 20px; font-size: 12px;">{{ selected_brands|length }} Brand(s)</span>
+        {% endif %}
+        {% if in_stock_only %}
+          <span style="background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 20px; font-size: 12px;">In-Stock Only</span>
+        {% endif %}
+        {% if query %}
+          <span style="background: #f3f4f6; color: #374151; padding: 3px 10px; border-radius: 20px; font-size: 12px;">Search: "{{ query }}"</span>
+        {% endif %}
+        <a href="{% url 'home' %}" style="font-size: 12px; color: #dc2626; margin-left: 6px;">Clear all</a>
+      </div>
+    {% endif %}
+
+    <!-- Products Grid -->
+    {% if products %}
+      <div class="products-grid">
+        {% for p in products %}
+          <div class="product-card">
+            
+            <!-- Badges -->
+            <div class="card-badge-container">
+              {% if p.is_bestseller %}
+                <span class="badge-bestseller">#1 Bestseller</span>
+              {% endif %}
+              <span class="badge-kerala">Kerala Pure</span>
+            </div>
+
+            <!-- Product Artwork / Packaging Visual -->
+            <a href="{% url 'product_detail' p.slug %}" class="product-img-box" title="{{ p.name }}">
+              {% render_product_image p %}
+            </a>
+
+            <!-- Card Body -->
+            <div class="product-card-body">
+              <div class="product-brand">{{ p.brand.name }}</div>
+              
+              <h4 class="product-title">
+                <a href="{% url 'product_detail' p.slug %}">{{ p.name }}</a>
+              </h4>
+
+              <div class="product-vol-pill">{{ p.volume_weight }}</div>
+
+              <!-- Ratings -->
+              <div class="product-rating-wrap">
+                <div class="rating-pill {% if p.rating < 4.4 %}low{% endif %}">
+                  <span>{{ p.rating }}</span>
+                  <i class="fa-solid fa-star" style="font-size: 9px;"></i>
+                </div>
+                <span class="rating-count-text">({{ p.rating_count }})</span>
+              </div>
+
+              <!-- Price Box -->
+              <div class="product-price-box">
+                <div class="price-row">
+                  <span class="price-symbol">₹</span>
+                  <span class="price-current">{{ p.price|floatformat:0 }}</span>
+                  {% if p.mrp > p.price %}
+                    <span class="price-mrp">M.R.P: ₹{{ p.mrp|floatformat:0 }}</span>
+                    <span class="price-discount">({{ p.discount_percent }}% off)</span>
+                  {% endif %}
+                </div>
+                <div style="font-size: 11px; color: #166534; font-weight: 600; margin-top: 2px;">
+                  <i class="fa-solid fa-truck-fast"></i> Free Delivery by Kerala Express
+                </div>
+              </div>
+
+              <!-- Stock Tag -->
+              <div class="stock-status-tag">
+                {% if p.stock > 12 %}
+                  <span class="stock-status-tag in-stock"><i class="fa-solid fa-check"></i> In Stock</span>
+                {% elif p.stock > 0 %}
+                  <span class="stock-status-tag low-stock"><i class="fa-solid fa-triangle-exclamation"></i> Only {{ p.stock }} left in stock - order soon.</span>
+                {% else %}
+                  <span class="stock-status-tag out-stock"><i class="fa-solid fa-circle-xmark"></i> Temporarily Out of Stock</span>
+                {% endif %}
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="card-actions-wrap">
+                {% if p.is_in_stock %}
+                  <form action="{% url 'add_to_cart' p.id %}" method="POST" class="ajax-add-cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn-add-cart">
+                      <i class="fa-solid fa-cart-plus" style="margin-right: 4px;"></i> Add to Cart
+                    </button>
+                  </form>
+                {% else %}
+                  <button class="btn-add-cart" disabled>
+                    Out of Stock
+                  </button>
+                {% endif %}
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <div class="pagination-wrap">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-btn">
+              &laquo; Previous
+            </a>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <span class="page-btn active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <a href="?page={{ num }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if query %}&q={{ query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-btn">
+              Next &raquo;
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 48px; text-align: center;">
+        <i class="fa-solid fa-magnifying-glass" style="font-size: 42px; color: #9ca3af; margin-bottom: 16px;"></i>
+        <h3 style="font-size: 18px; font-weight: 700; color: #111827;">No Kerala Ayurvedic products match your criteria.</h3>
+        <p style="color: #6b7280; margin: 8px 0 20px;">Try adjusting your filters, searching for terms like "oil", "arishtam", "kwath", or "lehyam".</p>
+        <a href="{% url 'home' %}" class="btn-proceed-pay" style="display: inline-block; width: auto; padding: 10px 24px;">View All 100 Products</a>
+      </div>
+    {% endif %}
+
+  </section>
+
+</div>
+
+<script>
+  function handleSortChange(sortVal) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sortVal);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+  }
+</script>
+{% endblock %}

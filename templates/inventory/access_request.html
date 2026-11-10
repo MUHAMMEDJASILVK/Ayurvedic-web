@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Seller Hub Access - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div class="auth-page-container" style="max-width: 520px;">
+  
+  <div class="auth-box" style="text-align: center;">
+    <div style="width: 60px; height: 60px; background: #fef3c7; color: #b45309; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px;">
+      <i class="fa-solid fa-boxes-stacked"></i>
+    </div>
+    
+    <h2 class="auth-title" style="margin-bottom: 8px;">Seller &amp; Inventory Central</h2>
+    <p style="font-size: 13px; color: #4b5563; line-height: 1.5; margin-bottom: 20px;">
+      This section manages product inventory stock levels across all 100 Kerala Ayurvedic products and customer order fulfillment.
+    </p>
+
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 14px; text-align: left; font-size: 12px; color: #166534; margin-bottom: 24px;">
+      <strong>Instant Testing Mode:</strong><br>
+      Click the button below to enable Seller / Inventory Manager permissions for your account (<strong>{{ user.email }}</strong>).
+    </div>
+
+    <a href="{% url 'inventory_dashboard' %}?enable_seller_mode=1" class="btn-proceed-pay" style="padding: 12px;">
+      <i class="fa-solid fa-key" style="margin-right: 6px;"></i> Enable Seller Mode &amp; Open Inventory
+    </a>
+
+    <div style="margin-top: 16px;">
+      <a href="{% url 'home' %}" style="font-size: 13px; color: #6b7280;">&larr; Return to Storefront</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

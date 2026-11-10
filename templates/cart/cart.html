@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load product_tags %}
+
+{% block title %}Shopping Cart - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 1300px; margin: 0 auto;">
+
+  <div class="cart-layout">
+    
+    <!-- Left Column: Items List -->
+    <div class="cart-items-card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #e5e7eb; padding-bottom: 14px; margin-bottom: 16px;">
+        <h1 style="font-size: 24px; font-weight: 700; color: #111827;">Shopping Cart</h1>
+        <span style="font-size: 14px; color: #6b7280;">Price</span>
+      </div>
+
+      {% if cart_items %}
+        {% for item in cart_items %}
+          <div class="cart-item-row" id="cart-row-{{ item.id }}">
+            
+            <!-- Item SVG / Image -->
+            <a href="{% url 'product_detail' item.product.slug %}" style="width: 100px; height: 100px; background: #fafaf9; border-radius: 6px; border: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: center; padding: 6px;">
+              {% render_product_image item.product %}
+            </a>
+
+            <!-- Item Info & Actions -->
+            <div>
+              <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #6b7280;">{{ item.product.brand.name }}</div>
+              
+              <h4 style="font-size: 15px; font-weight: 600; margin: 2px 0 4px;">
+                <a href="{% url 'product_detail' item.product.slug %}" style="color: #111827;">{{ item.product.name }}</a>
+              </h4>
+              
+              <div style="font-size: 12px; color: #4b5563; margin-bottom: 6px;">
+                Size: <strong>{{ item.product.volume_weight }}</strong>
+              </div>
+
+              <div style="font-size: 12px; margin-bottom: 10px;">
+                {% if item.product.stock > 12 %}
+                  <span style="color: #15803d; font-weight: 600;"><i class="fa-solid fa-check"></i> In Stock</span>
+                {% elif item.product.stock > 0 %}
+                  <span style="color: #b45309; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Only {{ item.product.stock }} left in stock</span>
+                {% else %}
+                  <span style="color: #dc2626; font-weight: 600;">Out of Stock</span>
+                {% endif %}
+                <span style="color: #9ca3af; margin: 0 6px;">&bull;</span>
+                <span style="color: #6b7280;">Eligible for FREE Shipping</span>
+              </div>
+
+              <!-- Quantity Controls & Delete -->
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="qty-stepper">
+                  <form action="{% url 'update_cart_item' item.id %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="decrease">
+                    <button type="submit" class="qty-btn" title="Decrease Quantity">-</button>
+                  </form>
+                  <span class="qty-display">{{ item.quantity }}</span>
+                  <form action="{% url 'update_cart_item' item.id %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="increase">
+                    <button type="submit" class="qty-btn" title="Increase Quantity">+</button>
+                  </form>
+                </div>
+
+                <form action="{% url 'remove_from_cart' item.id %}" method="POST" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" style="background: none; border: none; color: #007185; font-size: 12px; cursor: pointer;">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Item Price -->
+            <div style="text-align: right;">
+              <div style="font-size: 18px; font-weight: 800; color: #111827;">
+                ₹{{ item.line_total|floatformat:0 }}
+              </div>
+              {% if item.line_mrp_total > item.line_total %}
+                <div style="font-size: 12px; color: #9ca3af; text-decoration: line-through;">
+                  ₹{{ item.line_mrp_total|floatformat:0 }}
+                </div>
+                <div style="font-size: 11px; color: #15803d; font-weight: 600;">
+                  Saved ₹{{ item.line_savings|floatformat:0 }}
+                </div>
+              {% endif %}
+            </div>
+
+          </div>
+        {% endfor %}
+
+        <div style="text-align: right; margin-top: 20px; font-size: 16px;">
+          Subtotal ({{ cart.total_items }} items): <strong style="font-size: 20px; color: #111827;">₹{{ cart.subtotal_price|floatformat:0 }}</strong>
+        </div>
+
+      {% else %}
+        <div style="text-align: center; padding: 48px 20px;">
+          <i class="fa-solid fa-cart-shopping" style="font-size: 52px; color: #cbd5e1; margin-bottom: 16px;"></i>
+          <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 8px;">Your Kerala Ayurveda Cart is empty</h3>
+          <p style="color: #6b7280; margin-bottom: 24px;">Explore our selection of 100 authentic Ayurvedic formulations from top Kerala brands.</p>
+          <a href="{% url 'home' %}" class="btn-proceed-pay" style="display: inline-block; width: auto; padding: 12px 28px;">
+            Shop Ayurvedic Products
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right Column: Price Summary Box -->
+    {% if cart_items %}
+      <div class="cart-summary-card">
+        
+        <!-- Free Delivery Progress Tracker -->
+        <div style="margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #f3f4f6;">
+          {% if cart.subtotal_price >= 499 %}
+            <div style="color: #15803d; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-check"></i> Your order qualifies for FREE Delivery!
+            </div>
+          {% else %}
+            <div style="font-size: 12px; color: #4b5563; line-height: 1.4;">
+              Add <strong style="color: #b12704;">₹{{ 499|add:"-"|add:cart.subtotal_price|floatformat:0 }}</strong> more of eligible items to get <strong>FREE Delivery</strong>.
+            </div>
+          {% endif %}
+        </div>
+
+        <div style="font-size: 13px; color: #4b5563; line-height: 2; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Total M.R.P.:</span>
+            <span>₹{{ cart.subtotal_mrp|floatformat:0 }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; color: #15803d; font-weight: 600;">
+            <span>Discount on M.R.P.:</span>
+            <span>- ₹{{ cart.total_discount|floatformat:0 }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Delivery Fee:</span>
+            <span>
+              {% if cart.delivery_fee == 0 %}
+                <span style="color: #15803d; font-weight: 700;">FREE</span>
+              {% else %}
+                ₹{{ cart.delivery_fee }}
+              {% endif %}
+            </span>
+          </div>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 10px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; color: #111827;">
+            <span>Total Amount:</span>
+            <span>₹{{ cart.grand_total|floatformat:0 }}</span>
+          </div>
+          <div style="font-size: 11px; color: #15803d; font-weight: 600; text-align: right; margin-top: 2px;">
+            You will save ₹{{ cart.total_discount|floatformat:0 }} on this order
+          </div>
+        </div>
+
+        <!-- Proceed to Buy / Payment -->
+        <a href="{% url 'checkout' %}" class="btn-proceed-pay">
+          Proceed to Buy ({{ cart.total_items }} items)
+        </a>
+
+        <!-- Safe Checkout Assurance -->
+        <div style="margin-top: 16px; font-size: 11px; color: #6b7280; text-align: center; line-height: 1.5;">
+          <i class="fa-solid fa-lock" style="color: #15803d;"></i> Safe and Secure Payments. 100% Authentic Kerala Medicine Guarantee.
+        </div>
+
+      </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

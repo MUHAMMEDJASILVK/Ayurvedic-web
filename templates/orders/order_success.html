@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load product_tags %}
+
+{% block title %}Order Confirmed - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Success Card -->
+  <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 32px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 24px;">
+    
+    <div style="display: flex; gap: 16px; align-items: flex-start;">
+      <div style="width: 48px; height: 48px; background: #dcfce7; color: #15803d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h1 style="font-size: 22px; font-weight: 800; color: #15803d; margin-bottom: 4px;">
+          Order Placed, thank you!
+        </h1>
+        <p style="font-size: 13px; color: #4b5563;">
+          Confirmation has been dispatched to <strong>{{ order.email }}</strong>. We've notified Kerala Ayurveda fulfillment dispatch team.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Meta Box -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; background: #fdfbf7; border: 1px solid #f5ede0; border-radius: 6px; padding: 16px; margin: 24px 0;">
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #78350f; font-weight: 700;">Order Number</div>
+        <div style="font-size: 14px; font-weight: 800; color: #111827; margin-top: 2px;">{{ order.order_number }}</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #78350f; font-weight: 700;">Courier Tracking</div>
+        <div style="font-size: 13px; font-weight: 700; color: #15803d; margin-top: 2px;">
+          {{ order.tracking_number }} ({{ order.courier_partner }})
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #78350f; font-weight: 700;">Estimated Delivery</div>
+        <div style="font-size: 13px; font-weight: 700; color: #111827; margin-top: 2px;">{{ order.delivery_date_est }}</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #78350f; font-weight: 700;">Total Paid</div>
+        <div style="font-size: 16px; font-weight: 800; color: #b12704; margin-top: 2px;">₹{{ order.grand_total }}</div>
+      </div>
+    </div>
+
+    <!-- Delivery Address & Payment Details -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px; margin-bottom: 24px;">
+      <div>
+        <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px;">Shipping Address</h4>
+        <div style="color: #374151; line-height: 1.5;">
+          <strong>{{ order.full_name }}</strong><br>
+          {{ order.shipping_address }}<br>
+          {{ order.city }}, {{ order.state }} - {{ order.pincode }}<br>
+          Phone: +91 {{ order.phone }}
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px;">Payment Method</h4>
+        <div style="color: #374151; line-height: 1.5;">
+          Method: <strong>{{ order.get_payment_method_display }}</strong><br>
+          Status: <span style="color: #15803d; font-weight: 700;">{{ order.payment_status|upper }}</span><br>
+          Transaction Ref: <code>{{ order.transaction_id }}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items List -->
+    <h4 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 12px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px;">
+      Ordered Products ({{ order.items.count }})
+    </h4>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+      {% for item in order.items.all %}
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f9fafb; padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; background: #fafaf9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              {% if item.product %}{% render_product_image item.product %}{% endif %}
+            </div>
+            <div>
+              <div style="font-weight: 600; font-size: 13px; color: #111827;">{{ item.product_name }}</div>
+              <div style="font-size: 11px; color: #6b7280;">{{ item.brand_name }} &bull; Qty: {{ item.quantity }}</div>
+            </div>
+          </div>
+          <div style="font-weight: 700; font-size: 13px; color: #111827;">
+            ₹{{ item.line_total }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="{% url 'invoice' order.order_number %}" target="_blank" class="page-btn" style="padding: 10px 18px; font-size: 13px;">
+        <i class="fa-solid fa-file-invoice"></i> Print Tax Invoice
+      </a>
+      <a href="{% url 'order_detail' order.order_number %}" class="page-btn" style="padding: 10px 18px; font-size: 13px;">
+        <i class="fa-solid fa-location-crosshairs"></i> Track Shipment
+      </a>
+      <a href="{% url 'home' %}" class="btn-auth-primary" style="padding: 10px 24px; font-size: 13px; text-decoration: none; width: auto;">
+        Continue Shopping &rsaquo;
+      </a>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
