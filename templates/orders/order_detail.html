@@ -14,11 +14,29 @@
       </div>
     </div>
     <div>
+      {% if order.order_status != 'delivered' and order.order_status != 'cancelled' %}
+        <a href="{% url 'cancel_order' order.order_number %}" class="page-btn" style="color: #dc2626; border-color: #fca5a5; margin-right: 8px; font-weight: 600;">
+          <i class="fa-solid fa-ban"></i> Cancel Order
+        </a>
+      {% endif %}
       <a href="{% url 'invoice' order.order_number %}" target="_blank" class="page-btn">
         <i class="fa-solid fa-print"></i> Tax Invoice
       </a>
     </div>
   </div>
+
+  {% if order.order_status == 'cancelled' %}
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 24px; color: #991b1b; display: flex; align-items: center; gap: 12px;">
+      <i class="fa-solid fa-circle-xmark" style="font-size: 24px;"></i>
+      <div>
+        <strong style="font-size: 14px;">This order has been cancelled.</strong>
+        <div style="font-size: 12px; margin-top: 2px;">
+          {{ order.notes|default:'Order cancelled by customer request.' }} &bull; 
+          {% if order.payment_method != 'cod' %}Refund initiated to original payment source.{% else %}No payment was collected.{% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
   <!-- Tracking Status Card with Stepper -->
   <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">

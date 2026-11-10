@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load product_tags %}
+
+{% block title %}Cancel Order #{{ order.order_number }} - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div style="max-width: 750px; margin: 0 auto;">
+
+  <div style="background: #fff; border: 1px solid var(--ayur-border); border-radius: 8px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+    
+    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; border-bottom: 1px solid #f3f4f6; padding-bottom: 16px;">
+      <div style="width: 44px; height: 44px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <div>
+        <h1 style="font-size: 20px; font-weight: 800; color: #111827;">Cancel Order #{{ order.order_number }}</h1>
+        <p style="font-size: 13px; color: #6b7280; margin-top: 2px;">
+          Placed on {{ order.created_at|date:"d M Y, h:i A" }} &bull; Total: ₹{{ order.grand_total }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Items Being Cancelled -->
+    <div style="background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 6px; padding: 14px; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #78350f; margin-bottom: 8px;">
+        Items in this order to be cancelled:
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        {% for item in order.items.all %}
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #1f2937;">
+            <span>{{ item.quantity }}x <strong>{{ item.product_name }}</strong> ({{ item.brand_name }})</span>
+            <span style="font-weight: 700;">₹{{ item.line_total }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Cancellation Form -->
+    <form method="POST" action="{% url 'cancel_order' order.order_number %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="cancellation_reason" class="form-label">Reason for Cancellation *</label>
+        <select name="cancellation_reason" id="cancellation_reason" class="form-control" required style="padding: 10px 12px; font-size: 14px;">
+          <option value="">-- Please select a reason --</option>
+          <option value="Order created by mistake">Order created by mistake</option>
+          <option value="Expected delivery time is too long">Expected delivery time is too long</option>
+          <option value="Found alternative medicine or better price">Found alternative medicine or better price</option>
+          <option value="Need to change delivery address or phone number">Need to change delivery address or phone number</option>
+          <option value="Ordered duplicate products">Ordered duplicate products</option>
+          <option value="Changed mind / No longer needed">Changed mind / No longer needed</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="comments" class="form-label">Additional Comments (Optional)</label>
+        <textarea name="comments" id="comments" rows="2" class="form-control" placeholder="Tell us more about why you are cancelling"></textarea>
+      </div>
+
+      <!-- Refund & Restock Information -->
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; margin-bottom: 24px; font-size: 12px; color: #166534; line-height: 1.5;">
+        <i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i>
+        {% if order.payment_method == 'cod' %}
+          <strong>Cash on Delivery Order:</strong> No cancellation fee. The order will be terminated immediately.
+        {% else %}
+          <strong>Prepaid Order ({{ order.get_payment_method_display }}):</strong> A full refund of <strong>₹{{ order.grand_total }}</strong> will be processed to your original payment method in 3-5 business days.
+        {% endif %}
+        Warehouse stock will be restored automatically upon cancellation.
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button type="submit" class="btn-proceed-pay" style="background: #dc2626; border-color: #b91c1c; color: #fff; width: auto; padding: 10px 22px; font-size: 14px;">
+          <i class="fa-solid fa-ban" style="margin-right: 6px;"></i> Confirm Cancellation
+        </button>
+        <a href="{% url 'order_detail' order.order_number %}" class="page-btn" style="padding: 10px 18px;">
+          Don't Cancel (Return to Order)
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}
+

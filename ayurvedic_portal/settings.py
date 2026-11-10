@@ -12,7 +12,7 @@ if env_path.exists():
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 key, val = line.split('=', 1)
-                os.environ.setdefault(key.strip(), val.strip())
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-kerala-ayurveda-portal-secret-key-2026')
@@ -104,18 +104,25 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Email Configuration
-# If EMAIL_HOST_USER is provided, use SMTP; otherwise use console/file for safe dev mode
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com').strip()
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'keralaayurvedastore@gmail.com')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').strip() == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '').strip()
+# Remove any spaces from Google App Password (e.g. 'yltq kgbj msno wybl' -> 'yltqkgbjmsnowybl')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '').strip().replace(' ', '')
+EMAIL_TIMEOUT = 12
+
+raw_from_email = os.environ.get('DEFAULT_FROM_EMAIL', '').strip()
+if raw_from_email and not raw_from_email.endswith('@gmail.com>') and '@' in raw_from_email:
+    DEFAULT_FROM_EMAIL = raw_from_email
+elif EMAIL_HOST_USER:
+    DEFAULT_FROM_EMAIL = f"Kerala Ayurveda Store <{EMAIL_HOST_USER}>"
+else:
+    DEFAULT_FROM_EMAIL = 'keralaayurvedastore@gmail.com'
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
-    # Uses console backend so developers can test OTP immediately without a mail server blocking them
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # SMS Gateway Configuration (e.g. Fast2SMS / Twilio / custom gateway)

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Change Mobile Number - Kerala Ayurveda Store{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+  <div class="auth-box">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="width: 48px; height: 48px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 10px;">
+        <i class="fa-solid fa-mobile-screen"></i>
+      </div>
+      <h2 class="auth-title" style="margin-bottom: 6px;">Change Mobile Number</h2>
+      <p class="auth-subtitle">Update your registered phone number. A verification code will be sent to the new mobile number.</p>
+    </div>
+
+    <form method="POST" action="{% url 'change_phone' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Current Mobile Number</label>
+        <input type="text" class="form-control" value="+91 {{ user.phone_number }}" readonly style="background: #f3f4f6; color: #6b7280;">
+      </div>
+
+      <div class="form-group">
+        <label for="new_phone" class="form-label">New 10-Digit Mobile Number</label>
+        <div style="display: flex;">
+          <span style="background: #f3f4f6; border: 1px solid #a6a6a6; border-right: none; padding: 9px 12px; border-radius: 4px 0 0 4px; font-weight: 600; font-size: 14px;">+91</span>
+          <input type="tel" id="new_phone" name="new_phone" class="form-control" 
+                 style="border-radius: 0 4px 4px 0;"
+                 placeholder="10-digit mobile number" maxlength="10" required autofocus value="{{ new_phone|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Current Account Password</label>
+        <input type="password" id="password" name="password" class="form-control" 
+               placeholder="Enter current password to authorize" required>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+          <i class="fa-solid fa-shield-halved"></i> Required to protect your account against unauthorized modifications.
+        </div>
+      </div>
+
+      <button type="submit" class="btn-auth-primary" style="margin-top: 10px;">
+        Send Verification Code &rsaquo;
+      </button>
+    </form>
+
+    <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 16px; text-align: center;">
+      <a href="{% url 'profile' %}" style="font-size: 13px; font-weight: 600; color: #4b5563;">
+        &lsaquo; Back to Your Account
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

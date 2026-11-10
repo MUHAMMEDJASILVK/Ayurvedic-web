@@ -196,3 +196,72 @@ def invoice_view(request, order_number):
         order = get_object_or_404(Order.objects.prefetch_related('items'), order_number=order_number, user=request.user)
         
     return render(request, 'orders/invoice.html', {'order': order})
+
+
+@login_required
+def cancel_order_view(request, order_number):
+    # Sellers/admins can cancel any order, customer can cancel their own
+    if request.user.role in ['seller', 'admin'] or request.user.is_staff:
+        order = get_object_or_404(Order.objects.prefetch_related('items', 'items__product'), order_number=order_number)
+    else:
+        order = get_object_or_404(Order.objects.prefetch_related('items', 'items__product'), order_number=order_number, user=request.user)
+
+    if order.order_status in ['delivered', 'cancelled']:
+        messages.error(request, f"Order #{order.order_number} cannot be cancelled because it is already {order.get_order_status_display().lower()}.")
+        return redirect('order_detail', order_number=order.order_number)
+
+    if request.method == 'POST':
+        cancellation_reason = request.POST.get('cancellation_reason', 'Cancelled by customer').strip()
+
+        # 1. Update Order Status
+        order.order_status = 'cancelled'
+        if order.payment_status == 'completed':
+            order.payment_status = 'refund_initiated'
+        order.notes = f"Cancellation Reason: {cancellation_reason}"
+        order.save()
+
+        # 2. Restore Product Stock to Warehouse Inventory!
+        for item in order.items.all():
+            if item.product:
+                prod = item.product
+                old_stock = prod.stock
+                prod.stock += item.quantity
+                prod.save()
+
+                # Record Inventory Stock Restoration in StockLog
+                StockLog.objects.create(
+                    product=prod,
+                    change_type='return',
+                    quantity_changed=item.quantity,
+                    previous_stock=old_stock,
+                    new_stock=prod.stock,
+                    reference_id=order.order_number,
+                    remarks=f"Restored stock from cancelled order #{order.order_number} ({cancellation_reason})",
+                    performed_by=request.user
+                )
+
+        # 3. Send Cancellation Email
+        try:
+            subject = f"Order Cancelled #{order.order_number} - Kerala Ayurveda Store"
+            refund_note = "If you have already paid, a full refund has been initiated to your original payment method (3-5 business days)." if order.payment_method != 'cod' else "No payment was collected."
+            message = (
+                f"Namaste {order.full_name},\n\n"
+                f"Your order #{order.order_number} has been cancelled successfully.\n"
+                f"Reason for Cancellation: {cancellation_reason}\n\n"
+                f"{refund_note}\n\n"
+                f"Thank you,\nKerala Ayurveda Store"
+            )
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'keralaayurvedastore@gmail.com'),
+                recipient_list=[order.email],
+                fail_silently=True
+            )
+        except Exception as e:
+            print(f"Could not send cancellation email: {e}")
+
+        messages.success(request, f"Order #{order.order_number} has been cancelled. Inventory units have been restored to the warehouse.")
+        return redirect('order_detail', order_number=order.order_number)
+
+    return render(request, 'orders/cancel_order_confirm.html', {'order': order})

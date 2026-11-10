@@ -39,14 +39,22 @@
                 <a href="{% url 'order_detail' order.order_number %}" style="color: #007185; font-weight: 600;">View order details</a>
                 <span style="color: #d1d5db; margin: 0 6px;">|</span>
                 <a href="{% url 'invoice' order.order_number %}" target="_blank" style="color: #007185; font-weight: 600;">Invoice</a>
+                {% if order.order_status != 'delivered' and order.order_status != 'cancelled' %}
+                  <span style="color: #d1d5db; margin: 0 6px;">|</span>
+                  <a href="{% url 'cancel_order' order.order_number %}" style="color: #dc2626; font-weight: 600;">Cancel Order</a>
+                {% endif %}
               </div>
             </div>
           </div>
 
           <!-- Order Card Body -->
           <div style="padding: 20px;">
-            <div style="margin-bottom: 14px; font-size: 14px; font-weight: 700; color: #15803d; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-solid fa-truck"></i> Status: {{ order.get_order_status_display }}
+            <div style="margin-bottom: 14px; font-size: 14px; font-weight: 700; {% if order.order_status == 'cancelled' %}color: #dc2626;{% else %}color: #15803d;{% endif %} display: flex; align-items: center; gap: 8px;">
+              {% if order.order_status == 'cancelled' %}
+                <i class="fa-solid fa-ban"></i> Status: Cancelled
+              {% else %}
+                <i class="fa-solid fa-truck"></i> Status: {{ order.get_order_status_display }}
+              {% endif %}
               <span style="font-size: 12px; font-weight: normal; color: #6b7280;">&bull; Tracking: {{ order.tracking_number }}</span>
             </div>
 

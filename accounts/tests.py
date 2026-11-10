@@ -129,3 +129,95 @@ class AyurvedicPortalWorkflowTests(TestCase):
         self.assertIsNotNone(order)
         self.assertEqual(order.items.count(), 1)
         self.assertEqual(order.items.first().quantity, 3)
+
+    def test_order_cancellation_and_inventory_restoration(self):
+        user = User.objects.create_user(
+            username='canceller',
+            email='canceller@example.com',
+            phone_number='9876500002',
+            password='password123',
+            is_active=True,
+            is_verified=True
+        )
+        self.client.login(email='canceller@example.com', password='password123')
+
+        # Add 5 units to cart and place order
+        self.client.post(reverse('add_to_cart', args=[self.product.id]), {'quantity': 5})
+        initial_stock = self.product.stock
+        self.client.post(reverse('place_order'), {
+            'full_name': 'Cancelling Customer',
+            'email': 'canceller@example.com',
+            'phone': '9876500002',
+            'address': 'Palayam Road',
+            'city': 'Kozhikode',
+            'state': 'Kerala',
+            'pincode': '673001',
+            'payment_method': 'cod'
+        })
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, initial_stock - 5)
+
+        order = Order.objects.filter(user=user).first()
+        self.assertEqual(order.order_status, 'placed')
+
+        # Cancel the order
+        cancel_res = self.client.post(reverse('cancel_order', args=[order.order_number]), {
+            'cancellation_reason': 'Ordered wrong item by mistake'
+        })
+        self.assertEqual(cancel_res.status_code, 302)
+
+        # Verify status is cancelled and inventory is fully restored!
+        order.refresh_from_db()
+        self.assertEqual(order.order_status, 'cancelled')
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, initial_stock)
+
+    def test_change_email_and_mobile_flows(self):
+        user = User.objects.create_user(
+            username='editor',
+            email='old.email@example.com',
+            phone_number='9876500003',
+            password='MyPassword123',
+            is_active=True,
+            is_verified=True
+        )
+        self.client.login(email='old.email@example.com', password='MyPassword123')
+
+        # 1. Initiate email change
+        res = self.client.post(reverse('change_email'), {
+            'new_email': 'new.email@example.com',
+            'password': 'MyPassword123'
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertRedirects(res, reverse('verify_email_change'))
+
+        # Check verify page does not contain OTP
+        session = self.client.session
+        email_otp = session['email_change_otp']
+        verify_page = self.client.get(reverse('verify_email_change'))
+        self.assertNotContains(verify_page, email_otp)
+
+        # Submit OTP to complete email update
+        confirm_res = self.client.post(reverse('verify_email_change'), {'otp': email_otp})
+        self.assertEqual(confirm_res.status_code, 302)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'new.email@example.com')
+
+        # 2. Initiate mobile number change
+        p_res = self.client.post(reverse('change_phone'), {
+            'new_phone': '9876599999',
+            'password': 'MyPassword123'
+        })
+        self.assertEqual(p_res.status_code, 302)
+        self.assertRedirects(p_res, reverse('verify_phone_change'))
+
+        p_session = self.client.session
+        phone_otp = p_session['phone_change_otp']
+        p_verify_page = self.client.get(reverse('verify_phone_change'))
+        self.assertNotContains(p_verify_page, phone_otp)
+
+        # Confirm mobile change
+        p_confirm = self.client.post(reverse('verify_phone_change'), {'otp': phone_otp})
+        self.assertEqual(p_confirm.status_code, 302)
+        user.refresh_from_db()
+        self.assertEqual(user.phone_number, '9876599999')
