@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.conf import settings
 from .models import User, OTPVerification
 from .utils import send_registration_email_otp, send_registration_sms_otp
 from cart.models import Cart
@@ -140,28 +141,35 @@ def verify_otp_view(request):
         send_registration_email_otp(user, latest_otp.email_otp)
         send_registration_sms_otp(user, latest_otp.phone_otp)
 
+    smtp_configured = bool(getattr(settings, 'EMAIL_HOST_USER', ''))
+    sms_configured = bool(getattr(settings, 'SMS_API_KEY', ''))
+
+    def _render_verify(extra=None):
+        ctx = {
+            'masked_email': mask_email(user.email),
+            'masked_phone': mask_phone(user.phone_number),
+            'email': user.email,
+            'phone': user.phone_number,
+            'smtp_configured': smtp_configured,
+            'sms_configured': sms_configured,
+            'dev_email_otp': latest_otp.email_otp if settings.DEBUG else None,
+            'dev_phone_otp': latest_otp.phone_otp if settings.DEBUG else None,
+        }
+        if extra:
+            ctx.update(extra)
+        return render(request, 'accounts/verify_otp.html', ctx)
+
     if request.method == 'POST':
         input_email_otp = request.POST.get('email_otp', '').strip()
         input_phone_otp = request.POST.get('phone_otp', '').strip()
 
         if not input_email_otp or not input_phone_otp:
             messages.error(request, "Please enter both the Email OTP and Mobile OTP.")
-            return render(request, 'accounts/verify_otp.html', {
-                'masked_email': mask_email(user.email),
-                'masked_phone': mask_phone(user.phone_number),
-                'email': user.email,
-                'phone': user.phone_number,
-            })
+            return _render_verify()
 
         if latest_otp.is_expired():
             messages.error(request, "Your verification codes have expired. Please click 'Resend OTP' to receive new codes.")
-            return render(request, 'accounts/verify_otp.html', {
-                'masked_email': mask_email(user.email),
-                'masked_phone': mask_phone(user.phone_number),
-                'email': user.email,
-                'phone': user.phone_number,
-                'expired': True
-            })
+            return _render_verify({'expired': True})
 
         latest_otp.attempts += 1
         latest_otp.save()
@@ -215,13 +223,7 @@ def verify_otp_view(request):
                 errors.append("Mobile OTP does not match")
             messages.error(request, f"Verification failed: {', '.join(errors)}. Please verify and try again.")
 
-    context = {
-        'masked_email': mask_email(user.email),
-        'masked_phone': mask_phone(user.phone_number),
-        'email': user.email,
-        'phone': user.phone_number,
-    }
-    return render(request, 'accounts/verify_otp.html', context)
+    return _render_verify()
 
 
 def resend_otp_view(request):
