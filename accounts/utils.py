@@ -142,3 +142,4 @@ def send_registration_sms_otp(user, phone_otp):
         print(f">> Outgoing SMS to {phone}: \"{sms_text}\" <<")
         print(f">> Phone OTP is [{phone_otp}] (Valid for 10 min) <<\n")
         return True, "Dev Mode: Logged to terminal"
+

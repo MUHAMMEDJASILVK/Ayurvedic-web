@@ -174,3 +174,4 @@ Visit in your browser:
 python manage.py test
 ```
 All 10 test suites pass covering product seeding, filtering, registration, OTP dispatch, OTP verification, cart calculations, stock deduction, and seller dashboard controls.
+

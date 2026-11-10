@@ -728,6 +728,37 @@ class Command(BaseCommand):
 
             # Curated visual styling
             accent = color_accents.get(p_type, '#1b5e20')
+            
+            category_photo_pool = {
+                'oil': [
+                    'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=600&q=80',
+                ],
+                'tablet': [
+                    'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=600&q=80',
+                ],
+                'beauty': [
+                    'https://images.unsplash.com/photo-1608248597359-25143a537f19?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=600&q=80',
+                ],
+                'arishtam': [
+                    'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80',
+                ],
+                'choornam': [
+                    'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
+                ],
+                'lehyam': [
+                    'https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&w=600&q=80',
+                    'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=600&q=80',
+                ],
+            }
+            photos_for_type = category_photo_pool.get(p_type, category_photo_pool['oil'])
+            chosen_photo = photos_for_type[num % len(photos_for_type)]
 
             product, was_created = Product.objects.update_or_create(
                 sku=sku,
@@ -752,6 +783,7 @@ class Command(BaseCommand):
                     "is_featured": is_featured,
                     "is_bestseller": is_bestseller,
                     "is_kerala_certified": True,
+                    "image_url": chosen_photo,
                     "image_svg_accent": accent
                 }
             )
@@ -764,3 +796,4 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"Successfully seeded Kerala Ayurveda Database! Created: {created_count}, Updated: {updated_count}. Total products: {Product.objects.count()}"
         ))
+

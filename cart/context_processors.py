@@ -20,3 +20,4 @@ def cart_context(request):
         'cart_item_count': cart_count,
         'cart_subtotal': cart_subtotal,
     }
+

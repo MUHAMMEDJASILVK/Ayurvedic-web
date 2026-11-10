@@ -313,4 +313,18 @@ def render_product_image(product):
         </svg>
         """
 
+    if product.image_url:
+        output_html = f"""
+        <div class="product-visual-wrapper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
+          <img src="{product.image_url}" alt="{product.name}" class="product-photo-img" loading="lazy"
+               style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; transition: transform 0.25s ease;"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <div class="product-svg-fallback" style="display: none; width: 100%; height: 100%;">
+            {svg}
+          </div>
+        </div>
+        """
+        return mark_safe(output_html)
+
     return mark_safe(svg)
+

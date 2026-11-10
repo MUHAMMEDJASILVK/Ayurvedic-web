@@ -144,6 +144,33 @@
 
   <!-- Right Section: Product Catalog Grid -->
   <section class="catalog-content">
+
+    {% if not query and not category_slug %}
+      <!-- Hero Carousel Banner (Flipkart / Amazon Style) -->
+      <div class="hero-promo-slider" style="background: linear-gradient(135deg, #064e3b 0%, #14532d 50%, #1e3a1e 100%); border-radius: 8px; color: #fff; padding: 26px 30px; position: relative; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 4px;">
+        <div style="max-width: 650px; position: relative; z-index: 2;">
+          <div style="background: #ffd814; color: #111; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px;">
+            Kerala Ayurveda Festival &bull; Authentic Dispensary
+          </div>
+          <h2 style="font-size: 24px; font-weight: 800; line-height: 1.25; margin-bottom: 8px; color: #fff;">
+            100 Classical Kerala Ayurvedic Formulations
+          </h2>
+          <p style="font-size: 13px; opacity: 0.9; line-height: 1.5; margin-bottom: 16px; color: #dcfce7;">
+            Classical Thailams, Arishtams, Lehyams, Kwath tablets, and herbal beauty elixirs prepared by centuries-old Ashtavaidya masters including Kottakkal Arya Vaidya Sala, Vaidyaratnam, and Oushadhi.
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{% url 'home' %}?category=ayurvedic-oils" class="btn-proceed-pay" style="width: auto; padding: 8px 18px; font-size: 13px; font-weight: 700;">
+              Explore Herbal Oils
+            </a>
+            <a href="{% url 'home' %}?brand=kottakkal-arya-vaidya-sala" class="btn-auth-primary" style="width: auto; padding: 8px 18px; font-size: 13px; text-decoration: none;">
+              Kottakkal Range
+            </a>
+          </div>
+        </div>
+        <!-- Decorative leaf watermark -->
+        <i class="fa-solid fa-leaf" style="position: absolute; right: 10px; bottom: -20px; font-size: 180px; color: rgba(255,255,255,0.07); pointer-events: none;"></i>
+      </div>
+    {% endif %}
     
     <!-- Header Bar: Count and Sort Dropdown -->
     <div class="catalog-header-bar">
@@ -319,3 +346,4 @@
   }
 </script>
 {% endblock %}
+

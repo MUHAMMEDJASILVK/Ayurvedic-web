@@ -14,3 +14,4 @@ def portal_context(request):
         'portal_brand_name': 'Kerala Ayurveda Store',
         'portal_brand_tagline': 'Authentic Traditional Herbal Formulations',
     }
+

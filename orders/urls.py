@@ -9,3 +9,4 @@ urlpatterns = [
     path('detail/<str:order_number>/', views.order_detail_view, name='order_detail'),
     path('invoice/<str:order_number>/', views.invoice_view, name='invoice'),
 ]
+
